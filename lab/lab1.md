@@ -18,7 +18,7 @@ while the actual dataset is stored in the external local directory.
 Example configuration on Windows:
 
 ```bash
-dvc remote add -d localstorage "C:/Users/<username>/dvc-storage/mlops-lab-1"
+dvc remote add -d localstorage "C:/Users/wamou/dvc-storage/mlops-lab-1"
 git add .dvc/config
 git commit -m "Configure local DVC remote"
 git push
@@ -39,7 +39,7 @@ The chosen storage folder must remain outside `mlops-lab-1`.
 ## Project setup
 
 ```bash
-git clone https://github.com/<github-username>/mlops-lab-1.git
+git clone https://github.com/wassim1523/mlops-lab-1.git
 cd mlops-lab-1
 
 pip install uv
