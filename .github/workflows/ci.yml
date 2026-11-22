@@ -1,0 +1,63 @@
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.13.9"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run --no-sync ruff check src tests frontend
+      - run: uv run --no-sync python -m pytest -q
+  smoke:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t food11-api:ci .
+      - name: Probe the API
+        run: |
+          docker run -d --name api -p 127.0.0.1:8000:8000 -e SKIP_MODEL=1 food11-api:ci
+          for i in $(seq 1 30); do
+            curl -fsS localhost:8000/health && exit 0
+            sleep 2
+          done
+          docker logs api
+          exit 1
+      - name: Export tested image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker save food11-api:ci | gzip -1 > /tmp/api.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: tested-image
+          path: /tmp/api.tar.gz
+          compression-level: 0
+          retention-days: 1
+  push:
+    needs: smoke
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tested-image
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested image
+        run: |
+          docker load -i api.tar.gz
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA"
+          docker tag food11-api:ci "$image"
+          docker push "$image"

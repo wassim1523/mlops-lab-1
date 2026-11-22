@@ -4,3 +4,8 @@ mlflow.db
 mlflow.db-*
 mlruns/
 mlartifacts/
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+food11-snapshot/

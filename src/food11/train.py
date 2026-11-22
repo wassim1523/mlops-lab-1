@@ -1,13 +1,14 @@
 import argparse
+import os
 from pathlib import Path
 
-import mlflow
 import mlflow.pytorch
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
+import mlflow
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -100,7 +101,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000"))
     mlflow.set_experiment("food11")
 
     with mlflow.start_run() as run:
@@ -108,6 +109,7 @@ def main():
 
         mlflow.log_params({
             "dataset": args.dataset,
+            "test_size": len(image_sets["evaluation"]),
             "epochs": args.epochs,
             "lr": args.lr,
             "batch_size": args.batch_size,
