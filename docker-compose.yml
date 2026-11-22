@@ -1,0 +1,29 @@
+services:
+  mlflow:
+    build: ./mlflow
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - mlflow-data:/mlflow-data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=4)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  inference:
+    build: .
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      - inference
+    environment:
+      INFERENCE_URL: http://inference:8000
+volumes:
+  mlflow-data:
