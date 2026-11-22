@@ -4,12 +4,11 @@ Run from the repository root with:
     uv run python ./src/food11/data.py
 """
 
-from pathlib import Path
 import re
 import shutil
+from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
@@ -37,6 +36,15 @@ CATEGORIES = {
 }
 
 
+CLASSES = list(CATEGORIES.values())
+
+
+def resize_image(img: Image.Image, size: int = IMAGE_SIZE[0]) -> Image.Image:
+    return ImageOps.exif_transpose(img).convert("RGB").resize(
+        (size, size), Image.Resampling.LANCZOS
+    )
+
+
 def category_from_filename(filename: str) -> str:
     """Return the Food-11 category encoded at the start of a filename."""
     match = re.match(r"^(\d+)", filename)
@@ -62,8 +70,7 @@ def create_output_directories() -> None:
 def process_image(source: Path, destination: Path) -> None:
     """Correct orientation, convert to RGB, resize and save one image."""
     with Image.open(source) as image:
-        image = ImageOps.exif_transpose(image).convert("RGB")
-        image = image.resize(IMAGE_SIZE, Image.Resampling.LANCZOS)
+        image = resize_image(image)
         image.save(destination, format="JPEG", quality=90, optimize=True)
 
 

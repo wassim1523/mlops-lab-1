@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+.pytest_cache
+.ruff_cache
+.dvc
+data
+mlruns
+mlartifacts
+mlflow.db*
+**/__pycache__
+tests
+lab
+food11-snapshot
